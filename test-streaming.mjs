@@ -1,130 +1,101 @@
 #!/usr/bin/env node
 
-/**
- * Quick test script to verify streaming is working
- * Run with: node test-streaming.mjs
- * 
- * Make sure dev server is running: npm run dev
- */
+console.log('🧪 Streaming Test - gpt-5-nano\n');
 
-async function testStreaming() {
-  console.log('🧪 Testing Greentext Streaming...\n');
-  
-  const testUrl = 'https://en.wikipedia.org/wiki/Elon_Musk';
-  const maxChars = 800;
-  
-  console.log(`📝 Test URL: ${testUrl}`);
-  console.log(`📏 Max chars: ${maxChars}`);
-  console.log(`🚀 Starting request...\n`);
-  
-  const startTime = Date.now();
-  let firstChunkTime = 0;
-  let chunkCount = 0;
-  let totalContent = '';
+const tests = [
+  { url: 'https://en.wikipedia.org/wiki/Albert_Einstein', maxChars: 500, style: 'normal', name: 'Small (500)' },
+  { url: 'https://en.wikipedia.org/wiki/Elon_Musk', maxChars: 1500, style: 'normal', name: 'Default (1500)' },
+  { url: 'https://en.wikipedia.org/wiki/Donald_Trump', maxChars: 2000, style: 'long', name: 'Maximum (2000)' },
+];
+
+for (const test of tests) {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`📝 Test: ${test.name}`);
+  console.log(`   URL: ${test.url.split('/wiki/')[1]}`);
+  console.log(`   Max chars: ${test.maxChars}, Style: ${test.style}`);
+  console.log('='.repeat(60));
   
   try {
+    const startTime = Date.now();
     const response = await fetch('http://localhost:3000/api/generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url: testUrl,
-        style: 'normal',
-        maxChars,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(test)
     });
-    
-    if (!response.ok) {
-      console.error('❌ Request failed:', response.status);
-      const data = await response.json();
-      console.error('Error:', data.error);
-      return;
-    }
-    
+
     const contentType = response.headers.get('content-type');
-    console.log(`📡 Content-Type: ${contentType}\n`);
     
-    if (!contentType?.includes('text/event-stream')) {
-      console.log('⚠️  Not a streaming response, falling back to JSON');
-      const data = await response.json();
-      console.log('Result:', data.greentext);
-      return;
-    }
-    
-    console.log('✅ Streaming response detected!\n');
-    console.log('📥 Receiving chunks:\n');
-    
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    
-    while (true) {
-      const { done, value } = await reader.read();
+    if (contentType?.includes('text/event-stream')) {
+      console.log('✅ Received streaming response');
       
-      if (done) {
-        break;
-      }
+      let fullContent = '';
+      let chunkCount = 0;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
       
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      
-      for (const line of lines) {
-        if (line.trim() === '' || line.trim() === 'data: [DONE]') {
-          continue;
-        }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
         
-        if (line.startsWith('data: ')) {
-          try {
-            const jsonStr = line.slice(6);
-            const data = JSON.parse(jsonStr);
-            
-            if (data.content) {
-              chunkCount++;
-              totalContent += data.content;
-              
-              if (firstChunkTime === 0) {
-                firstChunkTime = Date.now() - startTime;
-                console.log(`⚡ First chunk received in ${firstChunkTime}ms!`);
-                console.log(`📝 Content preview: "${data.content.substring(0, 50)}..."\n`);
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                fullContent += data.content;
+                chunkCount++;
+                
+                // Show progress every 10 chunks
+                if (chunkCount % 10 === 0) {
+                  process.stdout.write(`\r   Progress: ${fullContent.length} chars (${chunkCount} chunks)`);
+                }
               }
-              
-              // Show progress every 10 chunks
-              if (chunkCount % 10 === 0) {
-                console.log(`   Chunk ${chunkCount}: ${totalContent.length} chars`);
-              }
+            } catch (e) {
+              // Ignore parse errors for non-JSON lines
             }
-          } catch (e) {
-            console.error('❌ Parse error:', e.message);
           }
         }
       }
+      
+      const duration = Date.now() - startTime;
+      console.log(`\n✅ Streaming complete in ${duration}ms`);
+      console.log(`   Total: ${fullContent.length} chars, ${chunkCount} chunks`);
+      
+      const lines = fullContent.split('\n').filter(l => l.trim());
+      const invalidLines = lines.filter(l => !l.trim().startsWith('>'));
+      
+      if (invalidLines.length > 0) {
+        console.log(`⚠️  Found ${invalidLines.length} lines not starting with >`);
+        invalidLines.slice(0, 3).forEach(line => console.log(`   "${line}"`));
+      } else {
+        console.log(`✅ All ${lines.length} lines properly formatted with >`);
+      }
+      
+      console.log(`\n📄 First 200 chars:\n${fullContent.substring(0, 200)}...`);
+      
+    } else if (contentType?.includes('application/json')) {
+      const data = await response.json();
+      console.log('⚠️  Received JSON response (non-streaming)');
+      console.log(`   Success: ${data.success}`);
+      console.log(`   Length: ${data.greentext?.length || 0} chars`);
+      if (data.error) {
+        console.log(`   Error: ${data.error}`);
+      }
+    } else {
+      console.log(`❌ Unexpected content type: ${contentType}`);
     }
     
-    const totalTime = Date.now() - startTime;
-    
-    console.log('\n' + '='.repeat(60));
-    console.log('📊 STREAMING TEST RESULTS');
-    console.log('='.repeat(60));
-    console.log(`✅ Total chunks received: ${chunkCount}`);
-    console.log(`⚡ Time to first chunk: ${firstChunkTime}ms`);
-    console.log(`⏱️  Total streaming time: ${totalTime}ms`);
-    console.log(`📏 Total characters: ${totalContent.length}`);
-    console.log(`📈 Average chunk size: ${(totalContent.length / chunkCount).toFixed(1)} chars`);
-    console.log(`🚀 Streaming rate: ${(chunkCount / (totalTime / 1000)).toFixed(1)} chunks/sec`);
-    console.log('='.repeat(60));
-    
-    console.log('\n📄 GENERATED GREENTEXT:\n');
-    console.log(totalContent);
-    console.log('\n✅ Test completed successfully!\n');
-    
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
-    console.error('\n⚠️  Make sure the dev server is running:');
-    console.error('   npm run dev\n');
+    console.log(`❌ Error: ${error.message}`);
   }
+  
+  // Small delay between tests
+  await new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-// Run test
-testStreaming().catch(console.error);
+console.log('\n' + '='.repeat(60));
+console.log('✅ All tests complete');
+console.log('📊 Check server logs at /tmp/nextjs-dev.log for detailed performance data');

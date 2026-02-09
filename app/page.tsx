@@ -115,15 +115,15 @@ export default function Home() {
               <path d="M50 45 Q48 35 50 28" fill="none" stroke="#4a9b4a" strokeWidth="2"/>
             </svg>
           </div>
-          <span className="logo-text">Greentext Generator</span>
+          <span className="logo-text">greentext generator</span>
         </div>
       </div>
 
       <div className="main-container">
-        <div className="top-bar">Greentext Generator</div>
+        <div className="top-bar">greentext generator</div>
         
         <div className="content">
-          <h1 className="title">Generate Greentexts from Wikipedia Bios</h1>
+          <h1 className="title">(beta) generate 4chan style bios from wikipedia!</h1>
           
           <InputForm onGenerate={handleGenerate} isLoading={isLoading} />
 
@@ -133,8 +133,12 @@ export default function Home() {
         </div>
 
         <div className="footer">
+      
           <div className="disclaimer">
-            This is a greentext generator powered by AI. All outputs are for entertainment purposes only.
+            this is a greentext generator powered by AI, hallucinates a lot since no web-search tool use. just for fun. built by <a href="https://haydenso.com">hayden</a>
+          </div>
+              <div className="disclaimer">
+            inspired by these <a href="https://x.com/jaynitx/status/2019686954070339892">tweet 1</a> and <a href="https://x.com/jaynitx/status/2018961687282606246">tweet 2</a> 
           </div>
         </div>
       </div>

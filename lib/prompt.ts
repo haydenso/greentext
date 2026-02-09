@@ -21,50 +21,56 @@ function getRubric(): string {
 export function buildMessages(
   extract: string,
   style: GreentextStyle,
-  maxChars: number
+  maxChars: number,
+  personName: string
 ): ChatMessage[] {
-  const rubric = getRubric();
+  // For reasoning models like gpt-5-nano, keep prompts CONCISE to reduce reasoning overhead
+  // Long, detailed instructions cause excessive reasoning token usage
   
-  const systemPrompt = `${rubric}
+  const systemPrompt = `You write greentexts in /biz/ style.
 
-CRITICAL FORMATTING RULES:
-- EVERY SINGLE LINE must start with ">" - NO EXCEPTIONS
-- NO section headers, NO timestamps, NO labels - EVERYTHING gets ">" prefix
-- NO emojis, NO "lol", "haha", NO meta-commentary, NO explanations
-- Start IMMEDIATELY with ">be" or ">be me"
-- Continue with greentext lines only
+Rules:
+You are an elite /biz/ anon shitposter who writes the sharpest, most savage greentext biographies on X / Twitter personalities, tech founders, AI figures, historical chads, or whoever gets ratio'd. Your style is raw, edgy, ironic, meme-heavy, zero filter. Never break character. Never explain the joke. Never use emojis, "lol", "haha", or any laugh signals. Never hedge ("maybe", "kinda", "sort of", "I think"). Never add meta-commentary ("this is funny because", "as an AI"). Never be polite, verbose, or manic—keep it brutally concise and punchy.
 
-STYLE GUIDANCE:
-${style === 'long' ? '- Create a SUBSTANTIAL greentext with rich detail, depth, and narrative arc\n- More lines, more events, more escalation\n- Don\'t rush - tell the full story' : '- Create a solid, meaty greentext with punch and specificity\n- Concise but detailed - every line should land'}
+Rules for a perfect greentext bio:
+- EVERY narrative line MUST start with "> be" followed by the person's full name (e.g., ">be Dario Amodei", ">be Marc Andreessen")
+- Use plain text subheaders for eras/sections (e.g., "1970s:", "the lifestyle:", "2025 & 2026:") to organize chronology without ">"
+- Lines are short: 5–15 words max, fragmented, telegraphic style
+- Structure like a underdog life story: 
+  >be [full person name] / born [year/place]
+  >humble/hardship origins: family struggles, odd jobs, survival mode
+  >education/grind arc: schools, early gigs, outworking normies
+  >career pivots: early fails, near-deaths, bold bets others mock
+  >founding/rise: tiny starts, flops, recoveries, moonshots
+  >dominance era: crushing competitors, inventing terms/tech, riding waves (crypto/AI booms)
+  >current peak: insane wealth, market caps, global impact
+  >quirks/management: iconic style (e.g., jackets/tattoos), paranoia, direct reports
+  >LAST FEW LINES MUST COVER RECENT EVENTS (2024-2026): latest controversies, product launches, market moves, recent tweets/quotes, current memes—show they're still actively doing things NOW
+  >end with killer punchline, mfw, TL;DR, or .jpg meme closer emphasizing vision/bet paying off
+- Pick ONE strong humorous premise/angle (e.g. "egghead chad who owns the libs", "doomer safety warlord building the unalignable", "alien organism farming corporate waste", "Denny's busboy arming the AI apocalypse") and COMMIT FULLY—heighten it, escalate, never backpedal
+- Use SPECIFIC details: real names, exact years, companies, funding rounds, controversies, quotes, numbers, events—show deep knowledge so the mockery lands hard
+- Make it RECENT & RELEVANT: lean into post-2020 events, current arcs, fresh memes where possible
+- Pack in MULTIPLE humor hooks: exaggeration, absurdity, irony, bait-and-switch, self-own, subversion, dark humor, tech/twitter slang—highlight near-deaths, plot twists, humble jobs contrasting billionaire status, bets that seemed insane but won
+- End strong: memorable twist, revelation, or ratio-level closer that makes it land, tying back to origins (e.g., from busboy to trillionaire)
 
-LENGTH GUIDANCE:
-- Generate AT LEAST ${Math.floor(maxChars * 0.8)} characters
-- Target range: ${maxChars - 300} to ${maxChars + 300} characters  
-- The character count is important - don't stop early
-- ${style === 'long' ? 'Generate MORE content rather than less' : 'Be substantial - quality AND quantity'}`;
+Write a greentext biography of {person}.
 
-  const userPrompt = `Write a greentext biography for this person.
+Output ONLY the greentext. No intro, no outro, no explanations. Start directly with the first >be `;
 
-WIKIPEDIA BIO (GROUND TRUTH):
+  const userPrompt = `Write greentext bio for ${personName} (${maxChars} chars):
+
+WIKIPEDIA SUMMARY (YOUR FOUNDATION):
 ${extract}
 
-YOU MAY SUPPLEMENT with your knowledge:
-- Recent events, controversies, memes, quotes
-- Exact years, companies, numbers, viral moments
-- Tech/Twitter slang, community jokes
-- Post-2020 events and relevance
+INSTRUCTIONS:
+- Use Wikipedia as the foundation/ground truth, NOT YOUR OWN KNOWLEDGE
+- DO NOT MAKE THINGS UP IF YOU ARE NOT SURE. BE SPECIFIC AND ONLY INFER FROM THEIR WIKIPEDIA, NOT YOUR OWN KNOWLEDGE
+- Supplement with your knowledge of recent events (2024-2026) to make it funnier and more current
+- Include specific: funding rounds, company names, exact years, controversies, viral moments
+- CRITICAL: Last 3-5 lines MUST cover what ${personName} is doing NOW (2024-2026) - recent launches, controversies, tweets, market moves
+- Wikipedia may be outdated since it was last updated, so use your knowledge of recent events to fill in what happened after
 
-Wikipedia is the foundation - enhance with your knowledge, don't contradict it.
-
-TARGET: ${maxChars} characters (${style} style)
-
-REMEMBER:
-- Start with >be or >be me
-- EVERY line starts with >
-- NO section headers or timestamps
-- Generate the FULL length - don't stop early
-
-Begin now:`;
+Start now with ">${personName}":`;
 
   return [
     { role: 'system', content: systemPrompt },
@@ -73,32 +79,20 @@ Begin now:`;
 }
 
 export function calculateMaxTokens(maxChars: number): number {
-  // For reasoning models (like gpt-oss-120b):
-  // - They use tokens for internal reasoning (varies WIDELY: 700-10,000+ tokens!)
-  // - Then they generate the actual output
-  // - We need to budget GENEROUSLY for both
-  //
-  // Empirical data from testing:
-  // - Albert Einstein (500 chars): reasoning=6996 chars (~1750 tokens), worked at 4000
-  // - Elon Musk (1500 chars): reasoning=10649 chars (~2650 tokens), FAILED at 4000
-  // - Donald Trump (2000 chars): reasoning=766 chars (~190 tokens), worked at 4167
-  //
-  // Reasoning overhead varies by person complexity/controversy
+  // For gpt-4.1-nano (standard chat model, NOT a reasoning model):
+  // No reasoning overhead - tokens are used directly for output
+  // 
+  // Token to character ratio: approximately 2.5-3 chars per token for English
   
-  // Output tokens needed (chars to tokens ratio: ~3 chars per token for English)
-  const outputTokens = Math.ceil(maxChars / 3);
+  const outputTokens = Math.ceil(maxChars / 2.5);
   
-  // Reasoning overhead: be VERY generous
-  // Complex/controversial people can trigger 3000+ tokens of reasoning
-  const reasoningOverhead = 4000;
+  // Add modest buffer for safety
+  const buffer = 200;
   
-  // Safety buffer (ensure we never cut off)
-  const buffer = 1500;
-  
-  const tokens = outputTokens + reasoningOverhead + buffer;
+  const tokens = outputTokens + buffer;
   
   // Clamp between reasonable bounds
-  // Minimum: 6000 tokens (enough for high reasoning overhead + small output)
-  // Maximum: 16384 tokens (model limit)
-  return Math.max(6000, Math.min(tokens, 16384));
+  // Minimum: 200 tokens
+  // Maximum: 16000 tokens (gpt-4.1 has large context window)
+  return Math.max(200, Math.min(tokens, 16000));
 }

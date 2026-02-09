@@ -1,13 +1,14 @@
 # Greentext Generator
 
-A Next.js application that generates humorous greentext "be..." stories from Wikipedia biographies using Azure OpenAI's gpt-5-mini model.
+A Next.js application that generates humorous greentext "be..." stories from Wikipedia biographies using Azure OpenAI's **gpt-4.1-nano** model with real-time streaming.
 
 ## Features
 
 - **Wikipedia Integration** - Paste any Wikipedia URL to generate a greentext
-- **Style Options** - Choose between "normal" (concise) or "long" (detailed) styles
+- **Real-time Streaming** - See your greentext appear as it's generated
+- **Style Options** - Choose between "normal" or "long" styles
 - **Flexible Character Limits**:
-  - **Preset Mode** - Quick 240-character default
+  - **Preset Mode** - Quick 1500-character default
   - **Custom Mode** - Set any length from 64 to 2,000 characters
 - **Quick Examples** - One-click access to popular Wikipedia figures
 - **Greentext Output** - Authentic 4chan-style formatting with ">" prefixes
@@ -36,10 +37,15 @@ Edit `.env.local` and fill in your Azure OpenAI credentials:
 
 ```
 AZURE_OPENAI_API_KEY=your-api-key-here
-AZURE_OPENAI_BASE=https://hkust.azure-api.net
-AZURE_OPENAI_DEPLOYMENT=gpt-5-mini
-AZURE_OPENAI_API_VERSION=2023-10-01
+AZURE_OPENAI_BASE=https://your-resource.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=gpt-4.1-nano
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
 ```
+
+**Important Notes:**
+- Use **standard chat models** (gpt-4.1-nano, gpt-4o, gpt-4o-mini) for best performance
+- **Avoid reasoning models** (gpt-5-nano, o1-preview, o1-mini, gpt-oss-120b) - they are slower and token-inefficient for this use case
+- The `AZURE_OPENAI_BASE` must end with a trailing slash `/`
 
 ### 3. Run Development Server
 
@@ -54,10 +60,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 1. Paste a Wikipedia URL (e.g., `https://en.wikipedia.org/wiki/Albert_Einstein`)
 2. Choose your preferred style (normal or long)
 3. Select character limit:
-   - **Preset**: Quick 240-character default
+   - **Preset**: Quick 1500-character default
    - **Custom**: Enter any value from 64 to 2,000 characters
 4. Click "Generate!" to create your greentext
-5. Copy the output using the "Copy" button
+5. Watch as the greentext streams in real-time
+6. Copy the output using the "Copy" button
 
 ## Project Structure
 
@@ -114,9 +121,25 @@ Ensure the platform supports:
 1. User submits a Wikipedia URL
 2. Server validates the URL (only `*.wikipedia.org`)
 3. Fetches article summary via Wikipedia REST API (`/api/rest_v1/page/summary/`)
-4. Builds prompt using `rubric.md` guidelines + style + character limit
-5. Calls Azure OpenAI endpoint: `${BASE}/openai/deployments/${DEPLOYMENT}/chat/completions`
-6. Returns greentext output to client (enforces character limit server-side)
+4. Builds optimized prompt with Wikipedia extract + style + character limit
+5. Streams response from Azure OpenAI: `${BASE}openai/deployments/${DEPLOYMENT}/chat/completions?api-version=${VERSION}`
+6. Real-time SSE (Server-Sent Events) streaming to client
+7. Returns formatted greentext output (enforces character limit server-side)
+
+### Why gpt-4.1-nano?
+
+We migrated from `gpt-oss-120b` (reasoning model) → `gpt-5-nano` (reasoning model) → **`gpt-4.1-nano` (standard chat model)**:
+
+- **Reasoning models** (gpt-5-nano, o1-preview, gpt-oss-120b):
+  - Use 100-5000+ "reasoning tokens" before output
+  - Response times: 30-60+ seconds
+  - Not suitable for real-time streaming
+  
+- **Standard models** (gpt-4.1-nano, gpt-4o):
+  - 0 reasoning tokens - direct output
+  - Response times: 3-4 seconds
+  - Perfect for streaming
+  - Token-efficient and cost-effective
 
 ## Testing
 

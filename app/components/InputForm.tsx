@@ -10,16 +10,14 @@ interface InputFormProps {
 
 // Top 10 most popular Wikipedia people (examples)
 const EXAMPLE_PEOPLE = [
-  { name: 'Donald Trump', url: 'https://en.wikipedia.org/wiki/Donald_Trump' },
-  { name: 'Joe Biden', url: 'https://en.wikipedia.org/wiki/Joe_Biden' },
   { name: 'Elon Musk', url: 'https://en.wikipedia.org/wiki/Elon_Musk' },
-  { name: 'Taylor Swift', url: 'https://en.wikipedia.org/wiki/Taylor_Swift' },
-  { name: 'Albert Einstein', url: 'https://en.wikipedia.org/wiki/Albert_Einstein' },
-  { name: 'Barack Obama', url: 'https://en.wikipedia.org/wiki/Barack_Obama' },
-  { name: 'Adolf Hitler', url: 'https://en.wikipedia.org/wiki/Adolf_Hitler' },
-  { name: 'Jesus', url: 'https://en.wikipedia.org/wiki/Jesus' },
-  { name: 'Michael Jackson', url: 'https://en.wikipedia.org/wiki/Michael_Jackson' },
-  { name: 'Leonardo da Vinci', url: 'https://en.wikipedia.org/wiki/Leonardo_da_Vinci' },
+  { name: 'Dario Amodei', url: 'https://en.wikipedia.org/wiki/Dario_Amodei' },
+  { name: 'Marc Andreessen', url: 'https://en.wikipedia.org/wiki/Marc_Andreessen' },
+  { name: 'Paul Graham', url: 'https://en.wikipedia.org/wiki/Paul_Graham_(programmer)' },
+  { name: 'Sam Altman', url: 'https://en.wikipedia.org/wiki/Sam_Altman' },
+    { name: 'Niccolò Machiavelli', url: 'https://en.wikipedia.org/wiki/Niccol%C3%B2_Machiavelli' },
+    { name: 'Mark Zuckerberg', url: 'https://en.wikipedia.org/wiki/Mark_Zuckerberg' },
+    { name: 'Bill Gates', url: 'https://en.wikipedia.org/wiki/Bill_Gates' }
 ];
 
 export default function InputForm({ onGenerate, isLoading }: InputFormProps) {

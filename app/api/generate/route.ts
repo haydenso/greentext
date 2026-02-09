@@ -64,17 +64,23 @@ export async function POST(req: Request) {
     
     // Build prompt messages
     const promptStartTime = Date.now();
-    const messages = buildMessages(wiki.extract, style, clampedMaxChars);
+    const messages = buildMessages(wiki.extract, style, clampedMaxChars, wiki.title);
     const maxTokens = calculateMaxTokens(clampedMaxChars);
     const promptDuration = Date.now() - promptStartTime;
     console.log(`[PERF] Prompt building: ${promptDuration}ms`);
     console.log(`[CONFIG] Max tokens: ${maxTokens}, Target chars: ${clampedMaxChars}, Style: ${style}`);
+    
+    // Debug: Log prompt size
+    const promptText = JSON.stringify(messages);
+    console.log(`[DEBUG] Prompt size: ${promptText.length} chars, messages count: ${messages.length}`);
+    console.log(`[DEBUG] System message length: ${messages[0]?.content?.length || 0} chars`);
+    console.log(`[DEBUG] User message length: ${messages[1]?.content?.length || 0} chars`);
 
-    // Call Azure OpenAI
-    // Note: gpt-oss-120b is a reasoning model - it may work better without streaming
-    // because reasoning content comes first, then the actual answer
-    const useStreaming = false; // Disabled for reasoning models
-    const endpoint = `${process.env.AZURE_OPENAI_BASE}/models/chat/completions?api-version=${process.env.AZURE_OPENAI_API_VERSION}`;
+    // Call Azure OpenAI with streaming enabled
+    // Using standard Azure OpenAI endpoint format (not Foundry Models)
+    // gpt-4.1-nano is a standard chat model (not a reasoning model)
+    const useStreaming = true; // Enable streaming for better UX
+    const endpoint = `${process.env.AZURE_OPENAI_BASE}openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${process.env.AZURE_OPENAI_API_VERSION}`;
 
     const azureStartTime = Date.now();
     const azureResp = await fetch(endpoint, {
@@ -84,11 +90,10 @@ export async function POST(req: Request) {
         'api-key': process.env.AZURE_OPENAI_API_KEY || '',
       },
       body: JSON.stringify({
-        model: process.env.AZURE_OPENAI_DEPLOYMENT,
         messages,
-        max_tokens: maxTokens,
-        temperature: 0.7,
+        max_completion_tokens: maxTokens,
         stream: useStreaming,
+        temperature: 0.8, // Higher temperature for more creative/funnier greentexts (0.7-0.9 recommended)
       }),
     });
 
@@ -186,10 +191,14 @@ export async function POST(req: Request) {
                   const jsonStr = line.slice(6);
                   const data = JSON.parse(jsonStr);
                   
+                  // Debug: Log the first few data chunks to see structure
+                  if (fullContent.length === 0) {
+                    console.log('[DEBUG] First stream chunk:', JSON.stringify(data, null, 2));
+                  }
+                  
                   // Extract content delta from the stream
-                  // For reasoning models: skip reasoning_content, only use content
                   const choice = data?.choices?.[0];
-                  const delta = choice?.delta?.content || choice?.message?.content || '';
+                  const delta = choice?.delta?.content || '';
                   
                   // Log first real content chunk
                   if (delta && fullContent.length === 0) {
