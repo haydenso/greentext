@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Greentext Generator',
-  description: 'Generate humorous greentexts from Wikipedia biographies',
+  title: '4chan greentext generator',
+  description: 'wikipedia bios for funsies',
 }
 
 export default function RootLayout({
