@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4archive - Easily archive 4chan threads</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Trebuchet MS", Tahoma, Verdana, Arial, sans-serif;
+            background-color: #ffffee;
+            color: #800000;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        a {
+            color: #0000ee;
+            text-decoration: underline;
+        }
+
+        a:hover {
+            color: #ff0000;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .logo-box {
+            width: 80px;
+            height: 60px;
+            position: relative;
+        }
+
+        .logo-box svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-text {
+            font-size: 42px;
+            font-weight: bold;
+            color: #800000;
+            font-family: Georgia, serif;
+        }
+
+        .nav-links {
+            margin-top: 10px;
+        }
+
+        .nav-links a {
+            color: #800000;
+            text-decoration: underline;
+            margin: 0 3px;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+            border: 1px solid #800000;
+            background-color: #fff;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background-color: #800000;
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 20px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #800000;
+            margin-bottom: 15px;
+        }
+
+        /* Archive Form */
+        .archive-form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .archive-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #aaa;
+            border-right: none;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .archive-input::placeholder {
+            color: #666;
+        }
+
+        .archive-btn {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .archive-btn:hover {
+            background-color: #555;
+        }
+
+        .stats-text {
+            text-align: center;
+            font-size: 12px;
+            color: #800000;
+            margin-top: 8px;
+        }
+
+        hr.divider {
+            border: none;
+            border-top: 1px solid #800000;
+            margin: 20px 0;
+        }
+
+        /* Two Column Layout */
+        .columns {
+            display: flex;
+            gap: 30px;
+        }
+
+        .column {
+            flex: 1;
+        }
+
+        .section-title {
+            color: #800000;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .thread-list {
+            list-style: none;
+        }
+
+        .thread-list li {
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .thread-list a {
+            color: #0000ee;
+        }
+
+        /* Bottom Section */
+        .bottom-section {
+            margin-top: 20px;
+            display: flex;
+            gap: 30px;
+        }
+
+        .stats-box {
+            flex: 1;
+        }
+
+        .stats-box .section-title {
+            margin-bottom: 10px;
+        }
+
+        .stats-list {
+            list-style: none;
+            font-size: 12px;
+        }
+
+        .stats-list li {
+            margin-bottom: 3px;
+        }
+
+        .stats-list .label {
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 20px;
+            padding: 15px;
+            text-align: center;
+            font-size: 11px;
+            border-top: 1px solid #800000;
+        }
+
+        .board-links {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .board-links a {
+            color: #0000ee;
+            margin: 0 2px;
+        }
+
+        .donation-addresses {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .donation-addresses div {
+            margin: 2px 0;
+        }
+
+        .admin-links {
+            margin-bottom: 10px;
+        }
+
+        .disclaimer {
+            color: #800000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-container">
+            <div class="logo-box">
+                <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cardboard Box -->
+                    <path d="M10 30 L50 15 L90 30 L90 70 L50 75 L10 70 Z" fill="#d4a574" stroke="#8b4513" stroke-width="1.5"/>
+                    <path d="M10 30 L50 45 L90 30" fill="none" stroke="#8b4513" stroke-width="1.5"/>
+                    <path d="M50 45 L50 75" fill="none" stroke="#8b4513" stroke-width="1"/>
+                    
+                    <!-- Box Flaps -->
+                    <path d="M10 30 L5 20 L45 10 L50 15" fill="#c49a6c" stroke="#8b4513" stroke-width="1"/>
+                    <path d="M90 30 L95 20 L55 10 L50 15" fill="#c49a6c" stroke="#8b4513" stroke-width="1"/>
+                    
+                    <!-- Green Sprout/Plant -->
+                    <path d="M50 45 Q45 35 40 30 Q35 25 40 20 Q45 15 50 25 Q55 15 60 20 Q65 25 60 30 Q55 35 50 45" fill="#4a9b4a" stroke="#2d5a2d" stroke-width="1"/>
+                    <ellipse cx="40" cy="22" rx="8" ry="5" fill="#5cb85c" transform="rotate(-20 40 22)"/>
+                    <ellipse cx="60" cy="22" rx="8" ry="5" fill="#5cb85c" transform="rotate(20 60 22)"/>
+                    
+                    <!-- Stem -->
+                    <path d="M50 45 Q48 35 50 28" fill="none" stroke="#4a9b4a" stroke-width="2"/>
+                </svg>
+            </div>
+            <span class="logo-text">4archive</span>
+        </div>
+        <div class="nav-links">
+            <a href="#">homepage</a> / 
+            <a href="#">faq</a> / 
+            <a href="#">donate</a> / 
+            <a href="#">takedown</a> / 
+            <a href="#">terms of service</a>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="top-bar">4archive</div>
+        
+        <div class="content">
+            <h1 class="title">Easily archive 4chan threads</h1>
+            
+            <div class="archive-form">
+                <div class="input-group">
+                    <input type="text" class="archive-input" placeholder="Enter a valid 4chan thread URL">
+                    <button class="archive-btn">Archive!</button>
+                </div>
+                <div class="stats-text">268 threads have been archived on 4archive</div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="columns">
+                <div class="column">
+                    <h2 class="section-title">Latest Threads</h2>
+                    <ul class="thread-list">
+                        <li><a href="#">Thread #538879724</a> from /b/ - 8 hours ago</li>
+                        <li><a href="#">Thread #538818830</a> from /b/ - 16 hours ago</li>
+                        <li><a href="#">Thread #14934265</a> from /s/ - yesterday</li>
+                        <li><a href="#">Thread #538642839</a> from /b/ - yesterday</li>
+                        <li><a href="#">Thread #14924333</a> from /s/ - yesterday</li>
+                        <li><a href="#">Thread #538500050</a> from /b/ - 2 days ago</li>
+                        <li><a href="#">Thread #538516216</a> from /b/ - 2 days ago</li>
+                        <li><a href="#">Thread #538467093</a> from /b/ - 2 days ago</li>
+                    </ul>
+                </div>
+                
+                <div class="column">
+                    <h2 class="section-title">Popular Threads</h2>
+                    <ul class="thread-list">
+                        <li><a href="#">Thread #537447861</a> from /b/ - on March 16, 2014</li>
+                        <li><a href="#">Thread #536936603</a> from /b/ - on March 12, 2014</li>
+                        <li><a href="#">Thread #536360505</a> from /b/ - on March 09, 2014</li>
+                        <li><a href="#">Thread #537338242</a> from /b/ - on March 15, 2014</li>
+                        <li><a href="#">Thread #538068990</a> from /b/ - 4 days ago</li>
+                        <li><a href="#">Thread #537635436</a> from /b/ - on March 17, 2014</li>
+                        <li><a href="#">Thread #537234956</a> from /b/ - on March 14, 2014</li>
+                        <li><a href="#">Thread #536547983</a> from /b/ - on March 10, 2014</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bottom-section">
+                <div class="column">
+                    <a href="#">Tweets by @4archive</a>
+                </div>
+                
+                <div class="stats-box">
+                    <h2 class="section-title">Statistics</h2>
+                    <ul class="stats-list">
+                        <li><span class="label">Total threads:</span> 268</li>
+                        <li><span class="label">Total views on threads:</span> 50,389</li>
+                        <li><span class="label">Total posts:</span> 52,113</li>
+                        <li><span class="label">Total images:</span> 18,332</li>
+                        <li><span class="label">Total takedowns:</span> 23</li>
+                        <li><span class="label">Most popular board:</span> /b/</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="board-links">
+                <a href="#">a</a> / <a href="#">b</a> / <a href="#">c</a> / <a href="#">d</a> / <a href="#">e</a> / <a href="#">f</a> / <a href="#">g</a> / <a href="#">gif</a> / <a href="#">h</a> / <a href="#">hr</a> / <a href="#">k</a> / <a href="#">m</a> / <a href="#">o</a> / <a href="#">p</a> / <a href="#">r</a> / <a href="#">s</a> / <a href="#">t</a> / <a href="#">u</a> / <a href="#">v</a> / <a href="#">vg</a> / <a href="#">vr</a> / <a href="#">w</a> / <a href="#">wg</a> / <a href="#">i</a> / <a href="#">ic</a> / <a href="#">r9k</a> / <a href="#">s4s</a> / <a href="#">cm</a> / <a href="#">hm</a> / <a href="#">lgbt</a> / <a href="#">y</a> / <a href="#">3</a> / <a href="#">adv</a> / <a href="#">an</a> / <a href="#">asp</a> / <a href="#">cgl</a> / <a href="#">ck</a> / <a href="#">co</a> / <a href="#">diy</a> / <a href="#">fa</a> / <a href="#">fit</a> / <a href="#">hc</a> / <a href="#">int</a> / <a href="#">jp</a> / <a href="#">lit</a> / <a href="#">mlp</a> / <a href="#">mu</a> / <a href="#">n</a> / <a href="#">out</a> / <a href="#">po</a> / <a href="#">pol</a> / <a href="#">sci</a> / <a href="#">soc</a> / <a href="#">sp</a> / <a href="#">tg</a> / <a href="#">toy</a> / <a href="#">trv</a> / <a href="#">tv</a> / <a href="#">vp</a> / <a href="#">x</a>
+            </div>
+            
+            <div class="donation-addresses">
+                <div>bitcoins: 1889Unwe9GkEq5V5jaYN3H7B1Ep12p2Sme</div>
+                <div>litecoins: LTr61CQV5aZCmi8mn5Feft1QUcXCXTFqf</div>
+                <div>dogecoins: DPTbjErBWfgPb3Gqd5zAThHc7JgKiTMnf</div>
+            </div>
+            
+            <div class="admin-links">
+                <a href="#">admins@4archive.org</a> / <a href="#">@4archive</a> / <a href="#">@thatinternetfaq</a>
+            </div>
+            
+            <div class="disclaimer">
+                4archive is in no way associated with 4chan.org or its affiliates.
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
